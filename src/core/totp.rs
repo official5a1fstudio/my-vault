@@ -1,4 +1,4 @@
-﻿use data_encoding::BASE32_NOPAD;
+use data_encoding::BASE32_NOPAD;
 use hmac::{digest::KeyInit, Hmac, Mac};
 use image::DynamicImage;
 use sha1::Sha1;
@@ -220,15 +220,15 @@ pub fn generate_totp(otp: &OtpAuth, unix_seconds: u64) -> Result<String, TotpErr
 
     let code_int: u32 = match otp.algorithm {
         TotpAlgorithm::Sha1 => dynamic_truncate(&hmac_bytes::<Hmac<Sha1>>(&secret_bytes, &msg)),
-        TotpAlgorithm::Sha256 => {
-            dynamic_truncate(&hmac_bytes::<Hmac<Sha256>>(&secret_bytes, &msg))
-        }
-        TotpAlgorithm::Sha512 => {
-            dynamic_truncate(&hmac_bytes::<Hmac<Sha512>>(&secret_bytes, &msg))
-        }
+        TotpAlgorithm::Sha256 => dynamic_truncate(&hmac_bytes::<Hmac<Sha256>>(&secret_bytes, &msg)),
+        TotpAlgorithm::Sha512 => dynamic_truncate(&hmac_bytes::<Hmac<Sha512>>(&secret_bytes, &msg)),
     };
     let modulus = 10u32.pow(otp.digits);
-    Ok(format!("{:0width$}", code_int % modulus, width = otp.digits as usize))
+    Ok(format!(
+        "{:0width$}",
+        code_int % modulus,
+        width = otp.digits as usize
+    ))
 }
 
 fn hmac_bytes<M: Mac + KeyInit>(key: &[u8], msg: &[u8]) -> Vec<u8> {
@@ -246,7 +246,9 @@ fn dynamic_truncate(hmac_result: &[u8]) -> u32 {
 }
 
 pub fn seconds_remaining(period: u64, unix_seconds: u64) -> u64 {
-    if period == 0 { return 0; }
+    if period == 0 {
+        return 0;
+    }
     period - (unix_seconds % period)
 }
 
@@ -257,8 +259,15 @@ pub mod desktop_capture {
 
     #[derive(Debug, Clone)]
     pub enum CaptureTarget {
-        Monitor { id: u32, name: String },
-        Window { id: u32, title: String, app_name: String },
+        Monitor {
+            id: u32,
+            name: String,
+        },
+        Window {
+            id: u32,
+            title: String,
+            app_name: String,
+        },
     }
 
     #[derive(Debug, Clone, Copy)]
@@ -301,7 +310,11 @@ pub mod desktop_capture {
             };
             let title = w.title().unwrap_or_default();
             let app_name = w.app_name().unwrap_or_default();
-            out.push(CaptureTarget::Window { id, title, app_name });
+            out.push(CaptureTarget::Window {
+                id,
+                title,
+                app_name,
+            });
         }
         Ok(out)
     }

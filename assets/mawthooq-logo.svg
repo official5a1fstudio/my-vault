@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Mawthooq — موثوق</title>
+  <desc id="desc">Olive vault shield with a coral keyhole and the Mawthooq wordmark, on warm paper.</desc>
+
+  <!-- Warm editorial paper ground and sharp hairline frame -->
+  <rect x="0" y="0" width="512" height="512" fill="#f5f0e5"/>
+  <rect x="24" y="24" width="464" height="464" fill="none" stroke="#222420" stroke-opacity="0.15" stroke-width="1"/>
+
+  <!-- Vault / shield outline -->
+  <path d="M256 70 L376 116 V250 C376 332 322 390 256 420 C190 390 136 332 136 250 V116 Z"
+        fill="#fffbf0" stroke="#254f43" stroke-width="6" stroke-linejoin="miter"/>
+  <path d="M256 100 L350 138 V248 C350 314 308 364 256 390 C204 364 162 314 162 248 V138 Z"
+        fill="none" stroke="#d8e0d0" stroke-width="2" stroke-linejoin="miter"/>
+
+  <!-- Coral keyhole -->
+  <circle cx="256" cy="232" r="25" fill="#cf6248"/>
+  <path d="M247 250 H265 L273 312 H239 Z" fill="#cf6248"/>
+
+  <!-- Wordmark -->
+  <text x="256" y="462" text-anchor="middle"
+        font-family="Amiri, 'Noto Naskh Arabic', 'Segoe UI', Georgia, serif"
+        font-size="46" fill="#183c32">موثوق</text>
+  <text x="256" y="492" text-anchor="middle"
+        font-family="Inter, 'Segoe UI', Arial, sans-serif"
+        font-size="17" letter-spacing="6" fill="#254f43">MAWTHOOQ</text>
+</svg>

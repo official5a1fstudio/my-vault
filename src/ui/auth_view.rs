@@ -1,4 +1,5 @@
-﻿use crate::core::totp::{self, OtpAuth, TotpError};
+use crate::core::totp::{self, OtpAuth, TotpError};
+use crate::ui::theme;
 use eframe::egui;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -45,15 +46,70 @@ pub struct AppState {
 
 impl eframe::App for AppState {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let theme_id = egui::Id::new("mawthooq_theme_applied");
+        if !ctx.data(|data| data.get_temp::<bool>(theme_id).unwrap_or(false)) {
+            theme::apply(ctx);
+            ctx.data_mut(|data| data.insert_temp(theme_id, true));
+        }
+
         egui::TopBottomPanel::top("nav").show(ctx, |ui| {
+            ui.add_space(12.0);
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.screen, crate::ui::Screen::Authenticator, "Authenticator");
-                ui.selectable_value(&mut self.screen, crate::ui::Screen::Settings, "Settings");
+                theme::brand_header(ui);
+                ui.add_space(28.0);
+                let auth_label = if self.screen == crate::ui::Screen::Authenticator {
+                    egui::RichText::new("Authenticator")
+                        .color(theme::OLIVE)
+                        .size(13.0)
+                        .underline()
+                } else {
+                    egui::RichText::new("Authenticator")
+                        .color(theme::INK_SOFT)
+                        .size(13.0)
+                };
+                let settings_label = if self.screen == crate::ui::Screen::Settings {
+                    egui::RichText::new("Settings")
+                        .color(theme::OLIVE)
+                        .size(13.0)
+                        .underline()
+                } else {
+                    egui::RichText::new("Settings")
+                        .color(theme::INK_SOFT)
+                        .size(13.0)
+                };
+                if ui.button(auth_label).clicked() {
+                    self.screen = crate::ui::Screen::Authenticator;
+                }
+                ui.add_space(6.0);
+                if ui.button(settings_label).clicked() {
+                    self.screen = crate::ui::Screen::Settings;
+                }
             });
+            ui.add_space(10.0);
         });
-        egui::CentralPanel::default().show(ctx, |ui| match self.screen {
-            crate::ui::Screen::Authenticator => self.auth.ui(ui),
-            crate::ui::Screen::Settings => self.settings.ui(ui),
+
+        let screen = self.screen;
+        egui::CentralPanel::default().show(ctx, |ui| {
+            egui::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    let outer_width = ui.available_width();
+                    let column_width = outer_width.min(920.0);
+                    let left_margin = ((outer_width - column_width) / 2.0).max(0.0);
+                    ui.add_space(28.0);
+                    ui.horizontal(|ui| {
+                        ui.add_space(left_margin);
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(column_width, 0.0),
+                            egui::Layout::top_down(egui::Align::Min),
+                            |ui| match screen {
+                                crate::ui::Screen::Authenticator => self.auth.ui(ui),
+                                crate::ui::Screen::Settings => self.settings.ui(ui),
+                            },
+                        );
+                    });
+                    ui.add_space(48.0);
+                });
         });
     }
 }
@@ -62,19 +118,36 @@ impl AuthenticatorViewState {
     /// Authenticator add flow (mobile + desktop): manual entry and image-file QR import.
     /// Desktop additionally supports window/region capture-and-scan without camera.
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        ui.heading("Add Authenticator (TOTP)");
-        ui.label("Camera QR scanning is disabled. Import a QR image file or enter details manually.");
-        ui.add_space(8.0);
+        theme::page_header(
+            ui,
+            "VAULT  /  TOTP",
+            "Add an authenticator",
+            "Quiet protection for everything that matters. Import a QR image or enter otpauth details manually — every code stays on this device.",
+        );
+        ui.add_space(26.0);
 
-        if ui.button("Import QR from image file").clicked() {
-            self.import_from_image_file();
-        }
+        theme::card(ui, "01   /   QR IMAGE IMPORT", |ui| {
+            ui.label(
+                egui::RichText::new(
+                    "Camera QR scanning is disabled. Import a QR image file instead.",
+                )
+                .color(theme::INK_SOFT),
+            );
+            ui.add_space(12.0);
+            if theme::primary_button(ui, "Import QR from image file") {
+                self.import_from_image_file();
+            }
+        });
 
         #[cfg(any(target_os = "windows", target_os = "linux"))]
         {
-            ui.add_space(6.0);
-            ui.group(|ui| {
-                ui.label("Desktop: scan window or screen region (no camera)");
+            ui.add_space(16.0);
+            theme::card(ui, "02   /   DESKTOP CAPTURE", |ui| {
+                ui.label(
+                    egui::RichText::new("Scan a window or screen region — no camera required.")
+                        .color(theme::INK_SOFT),
+                );
+                ui.add_space(12.0);
                 ui.horizontal(|ui| {
                     if ui.button("Refresh monitors/windows").clicked() {
                         self.refresh_desktop_targets();
@@ -83,45 +156,78 @@ impl AuthenticatorViewState {
                         self.scan_selected_desktop_target();
                     }
                 });
+                ui.add_space(10.0);
                 self.desktop_capture_ui(ui);
             });
         }
 
-        ui.add_space(10.0);
-        ui.separator();
-        ui.label("Manual / parsed otpauth details");
-        ui.horizontal(|ui| {
-            ui.label("Issuer");
-            ui.text_edit_singleline(&mut self.issuer);
+        ui.add_space(16.0);
+        theme::card(ui, "03   /   MANUAL ENTRY", |ui| {
+            ui.label(
+                egui::RichText::new(
+                    "Issuer, account and Base32 secret — or a full otpauth:// URI.",
+                )
+                .color(theme::INK_SOFT),
+            );
+            ui.add_space(12.0);
+            ui.horizontal(|ui| {
+                ui.label("Issuer");
+                ui.text_edit_singleline(&mut self.issuer);
+            });
+            ui.horizontal(|ui| {
+                ui.label("Account");
+                ui.text_edit_singleline(&mut self.account_name);
+            });
+            ui.horizontal(|ui| {
+                ui.label("Secret (Base32 or otpauth://)");
+                ui.text_edit_singleline(&mut self.secret);
+            });
+            ui.add_space(12.0);
+            if theme::primary_button(ui, "Parse & add") {
+                self.parse_and_add_manual();
+            }
         });
-        ui.horizontal(|ui| {
-            ui.label("Account");
-            ui.text_edit_singleline(&mut self.account_name);
-        });
-        ui.horizontal(|ui| {
-            ui.label("Secret (Base32 or otpauth://)");
-            ui.text_edit_singleline(&mut self.secret);
-        });
-        if ui.button("Parse & add").clicked() {
-            self.parse_and_add_manual();
-        }
 
-        if !self.status.is_empty() {
-            ui.add_space(8.0);
-            ui.label(&self.status);
-        }
-
-        if let Some(otp) = self.last_added.clone() {
-            ui.add_space(8.0);
-            self.refresh_preview(&otp);
-            ui.group(|ui| {
-                ui.label(format!("Added: {} ({})", otp.issuer, otp.account_name));
-                if let Some(code) = &self.preview_code {
-                    ui.label(format!("Current code: {}", format_code(code)));
-                    ui.label(format!("Refreshes in: {}s", self.preview_remaining));
-                    if ui.button("Copy code").clicked() {
-                        ui.ctx().copy_text(code.clone());
-                        self.status = "Code copied to clipboard.".into();
+        let status = self.status.clone();
+        let added = self.last_added.clone();
+        if !status.is_empty() || added.is_some() {
+            ui.add_space(16.0);
+            theme::card(ui, "04   /   RESULT", |ui| {
+                if !status.is_empty() {
+                    let is_error = status.starts_with("Failed")
+                        || status.starts_with("Invalid")
+                        || status.starts_with("Desktop capture");
+                    theme::status(ui, &status, is_error);
+                }
+                if let Some(otp) = added {
+                    ui.add_space(12.0);
+                    self.refresh_preview(&otp);
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "Added: {} ({})",
+                            otp.issuer, otp.account_name
+                        ))
+                        .color(theme::INK),
+                    );
+                    if let Some(code) = &self.preview_code {
+                        ui.add_space(8.0);
+                        ui.label(
+                            egui::RichText::new(format!("Current code: {}", format_code(code)))
+                                .color(theme::OLIVE)
+                                .size(22.0),
+                        );
+                        ui.label(
+                            egui::RichText::new(format!(
+                                "Refreshes in: {}s",
+                                self.preview_remaining
+                            ))
+                            .color(theme::INK_SOFT),
+                        );
+                        ui.add_space(10.0);
+                        if theme::primary_button(ui, "Copy code") {
+                            ui.ctx().copy_text(code.clone());
+                            self.status = "Code copied to clipboard.".into();
+                        }
                     }
                 }
             });
@@ -164,7 +270,11 @@ impl AuthenticatorViewState {
         let result = if input.to_ascii_lowercase().starts_with("otpauth://") {
             totp::parse_otpauth_uri(input)
         } else {
-            let issuer = if self.issuer.trim().is_empty() { "Account".to_string() } else { self.issuer.trim().to_string() };
+            let issuer = if self.issuer.trim().is_empty() {
+                "Account".to_string()
+            } else {
+                self.issuer.trim().to_string()
+            };
             let account = self.account_name.trim().to_string();
             let uri = format!(
                 "otpauth://totp/{}:{}?secret={}&issuer={}&algorithm=SHA1&digits=6&period=30",
@@ -203,10 +313,13 @@ impl AuthenticatorViewState {
             Ok(monitors) => {
                 for t in monitors {
                     let label = match &t {
-                        totp::desktop_capture::CaptureTarget::Monitor { id, name } => format!("Monitor {id}: {name}"),
+                        totp::desktop_capture::CaptureTarget::Monitor { id, name } => {
+                            format!("Monitor {id}: {name}")
+                        }
                         _ => "Monitor".into(),
                     };
-                    self.desktop_targets.push(DesktopTargetChoice { label, target: t });
+                    self.desktop_targets
+                        .push(DesktopTargetChoice { label, target: t });
                 }
             }
             Err(e) => self.status = format!("Failed to list monitors: {e}"),
@@ -215,19 +328,32 @@ impl AuthenticatorViewState {
             Ok(windows) => {
                 for t in windows {
                     let label = match &t {
-                        totp::desktop_capture::CaptureTarget::Window { id, title, app_name } => {
-                            let t = if title.is_empty() { "(untitled)" } else { title };
+                        totp::desktop_capture::CaptureTarget::Window {
+                            id,
+                            title,
+                            app_name,
+                        } => {
+                            let t = if title.is_empty() {
+                                "(untitled)"
+                            } else {
+                                title
+                            };
                             format!("Window {id}: {app_name} - {t}")
                         }
                         _ => "Window".into(),
                     };
-                    self.desktop_targets.push(DesktopTargetChoice { label, target: t });
+                    self.desktop_targets
+                        .push(DesktopTargetChoice { label, target: t });
                 }
             }
             Err(e) => self.status = format!("Failed to list windows: {e}"),
         }
         if self.selected_target.unwrap_or(usize::MAX) >= self.desktop_targets.len() {
-            self.selected_target = if self.desktop_targets.is_empty() { None } else { Some(0) };
+            self.selected_target = if self.desktop_targets.is_empty() {
+                None
+            } else {
+                Some(0)
+            };
         }
     }
 
@@ -249,13 +375,20 @@ impl AuthenticatorViewState {
                     }
                 });
         }
-        ui.checkbox(&mut self.use_region, "Scan selected region (x,y,w,h) within target");
+        ui.checkbox(
+            &mut self.use_region,
+            "Scan selected region (x,y,w,h) within target",
+        );
         if self.use_region {
             ui.horizontal(|ui| {
-                ui.label("x"); ui.add(egui::TextEdit::singleline(&mut self.region_x).desired_width(60.0));
-                ui.label("y"); ui.add(egui::TextEdit::singleline(&mut self.region_y).desired_width(60.0));
-                ui.label("w"); ui.add(egui::TextEdit::singleline(&mut self.region_w).desired_width(60.0));
-                ui.label("h"); ui.add(egui::TextEdit::singleline(&mut self.region_h).desired_width(60.0));
+                ui.label("x");
+                ui.add(egui::TextEdit::singleline(&mut self.region_x).desired_width(60.0));
+                ui.label("y");
+                ui.add(egui::TextEdit::singleline(&mut self.region_y).desired_width(60.0));
+                ui.label("w");
+                ui.add(egui::TextEdit::singleline(&mut self.region_w).desired_width(60.0));
+                ui.label("h");
+                ui.add(egui::TextEdit::singleline(&mut self.region_h).desired_width(60.0));
             });
         }
     }
@@ -271,8 +404,18 @@ impl AuthenticatorViewState {
             return;
         };
         let region = if self.use_region {
-            match (self.region_x.parse(), self.region_y.parse(), self.region_w.parse(), self.region_h.parse()) {
-                (Ok(x), Ok(y), Ok(w), Ok(h)) => Some(totp::desktop_capture::CaptureRegion { x, y, width: w, height: h }),
+            match (
+                self.region_x.parse(),
+                self.region_y.parse(),
+                self.region_w.parse(),
+                self.region_h.parse(),
+            ) {
+                (Ok(x), Ok(y), Ok(w), Ok(h)) => Some(totp::desktop_capture::CaptureRegion {
+                    x,
+                    y,
+                    width: w,
+                    height: h,
+                }),
                 _ => {
                     self.status = "Invalid region values (expected integers x,y,w,h).".into();
                     return;
@@ -281,7 +424,10 @@ impl AuthenticatorViewState {
         } else {
             None
         };
-        let selection = totp::desktop_capture::CaptureSelection { target: choice.target, region };
+        let selection = totp::desktop_capture::CaptureSelection {
+            target: choice.target,
+            region,
+        };
         match totp::desktop_capture::scan_capture_selection(&selection) {
             Ok(otp) => self.apply_otp(otp, "Scanned TOTP QR from selected desktop window/region."),
             Err(e) => self.status = format!("Desktop capture scan failed: {e}"),

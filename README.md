@@ -1,33 +1,44 @@
-# My Vault
+# موثوق / Mawthooq
 
-A Flutter app for a personal account vault targeting Android and Windows.
+Mawthooq (**موثوق**) is a local password vault and TOTP authenticator built in Rust by **Amin** and **Emad** at 5A1F Studio.
 
-## Implemented
+The interface follows the [5A1F Studio website](https://5a1f.vercel.app) visual language: warm paper, ink type, olive structure, coral emphasis, sharp borders and generous editorial spacing.
 
-- Responsive Flutter interface with Arabic/English and RTL/LTR.
-- First-run master-password setup and vault unlock screen.
-- Local SQLite database for account records.
-- Account add, edit, view, delete, and search.
-- Account payloads encrypted with AES-256-GCM before database persistence.
-- A key derived from the master password using PBKDF2-HMAC-SHA256.
-- The master password itself is not stored. Locking clears the in-memory key.
+## What it does
 
-## Important security notes
+- Keeps account records in a local vault on your device.
+- Generates time-based one-time passwords (TOTP).
+- Imports accounts from QR images or manual `otpauth://` details.
+- On Windows and Linux, can scan a selected window or screen region without a camera.
+- On Android, includes a local keyboard-bridge hub.
 
-This is an early implementation and has not yet had an independent security audit. Do not use it as the only copy of important credentials or enter real account passwords until the implementation has been reviewed and tested on your devices. If the master password is lost, this local vault cannot currently be recovered.
+## Downloads
 
-The sync service, encrypted backups, TOTP authenticator, QR scanning, biometric unlock, and recovery flow are not implemented yet. Never commit real passwords, recovery codes, 2FA seeds, or encryption keys to this repository.
+Each release provides one directly runnable file per platform:
+
+| Platform | File |
+|---|---|
+| Windows | `my_vault_rs-windows-x86_64.exe` |
+| Android | `mawthooq-arm64-v8a.apk` |
+| Debian | `my-vault-rs_0.1.1_amd64.deb` |
+| Linux | `my_vault_rs-linux-x86_64` |
+
+Release page: https://github.com/official5a1fstudio/my-vault/releases/tag/v0.1.1
+
+## Maturity
+
+Mawthooq is in active development. It has **not** been independently security-audited, has no cloud sync, and does not store real credentials in this repository. Do not rely on it as the only copy of important passwords.
 
 ## Build locally
 
-Install the Flutter stable SDK, then run:
-
 ```bash
-flutter pub get
-flutter test
-flutter run
+cargo check --all-targets
+cargo test --all-targets
+cargo build --release
 ```
 
-## GitHub Actions
+Android builds use `cargo ndk -t arm64-v8a` and are packaged into a signed APK by GitHub Actions.
 
-Push to `main` or run **Build My Vault** from the Actions tab. Download the generated APK or Windows build from the workflow's Artifacts section.
+## Credits
+
+Built by Amin and Emad — 5A1F Studio.

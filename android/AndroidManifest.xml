@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="studio.a1f.mawthooq">
+
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+
+    <!-- eframe's default glow renderer needs OpenGL ES 2.0. -->
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <application
+        android:hasCode="false"
+        android:label="موثوق"
+        android:supportsRtl="true">
+        <activity
+            android:name="android.app.NativeActivity"
+            android:exported="true"
+            android:label="موثوق"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|uiMode">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="my_vault_rs" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

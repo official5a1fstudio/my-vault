@@ -1,4 +1,5 @@
-﻿use eframe::egui;
+use crate::ui::theme;
+use eframe::egui;
 
 #[derive(Default)]
 pub struct SettingsViewState {
@@ -13,38 +14,70 @@ pub struct SettingsViewState {
 
 impl SettingsViewState {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        ui.heading("Settings");
-        ui.add_space(8.0);
+        theme::page_header(
+            ui,
+            "VAULT  /  PREFERENCES",
+            "Settings",
+            "Quiet defaults, clear boundaries. Companion features are only enabled where the platform can support them.",
+        );
+        ui.add_space(26.0);
 
         #[cfg(target_os = "android")]
         {
             self.android_keyboard_bridge_ui(ui);
+            ui.add_space(16.0);
         }
 
         #[cfg(not(target_os = "android"))]
         {
-            ui.group(|ui| {
-                ui.label("Keyboard bridge");
+            theme::card(ui, "01   /   KEYBOARD BRIDGE", |ui| {
                 ui.label(
-                    "Companion keyboard-bridge hub is available only on Android mobile builds. \
-Desktop keyboard-bridge endpoints are disabled/omitted.",
+                    egui::RichText::new("Keyboard bridge")
+                        .color(theme::INK)
+                        .size(15.0),
+                );
+                ui.add_space(8.0);
+                ui.label(
+                    egui::RichText::new(
+                        "Companion keyboard-bridge hub is available only on Android mobile builds. \
+                         Desktop keyboard-bridge endpoints are disabled/omitted.",
+                    )
+                    .color(theme::INK_SOFT),
                 );
             });
+            ui.add_space(16.0);
         }
 
-        ui.add_space(8.0);
-        ui.group(|ui| {
-            ui.label("Authenticator capture");
-            ui.label("Camera/webcam QR scanning is removed on all platforms.");
-            ui.label("Use image-file QR import (all platforms) or desktop window/region capture (Windows/Linux).");
+        theme::card(ui, "02   /   AUTHENTICATOR CAPTURE", |ui| {
+            ui.label(
+                egui::RichText::new("Authenticator capture")
+                    .color(theme::INK)
+                    .size(15.0),
+            );
+            ui.add_space(8.0);
+            ui.label(
+                egui::RichText::new("Camera/webcam QR scanning is removed on all platforms.")
+                    .color(theme::INK_SOFT),
+            );
+            ui.label(
+                egui::RichText::new(
+                    "Use image-file QR import (all platforms) or desktop window/region capture (Windows/Linux).",
+                )
+                .color(theme::INK_SOFT),
+            );
         });
     }
 
     #[cfg(target_os = "android")]
     fn android_keyboard_bridge_ui(&mut self, ui: &mut egui::Ui) {
-        ui.group(|ui| {
-            ui.label("Keyboard bridge (Android only)");
-            ui.label("Local companion keyboard-bridge hub for mobile keyboard paste integration.");
+        theme::card(ui, "01   /   KEYBOARD BRIDGE (ANDROID)", |ui| {
+            ui.label(
+                egui::RichText::new(
+                    "Local companion keyboard-bridge hub for mobile keyboard paste integration.",
+                )
+                .color(theme::INK_SOFT),
+            );
+            ui.add_space(12.0);
             if self.bridge_port.is_empty() {
                 self.bridge_port = "8765".to_string();
             }
@@ -52,15 +85,24 @@ Desktop keyboard-bridge endpoints are disabled/omitted.",
                 ui.label("Port");
                 ui.text_edit_singleline(&mut self.bridge_port);
             });
-            let running = self.bridge.as_ref().map(|b| b.is_running()).unwrap_or(false);
-            ui.label(if running { "Status: running" } else { "Status: stopped" });
+            let running = self
+                .bridge
+                .as_ref()
+                .map(|b| b.is_running())
+                .unwrap_or(false);
+            ui.label(if running {
+                "Status: running"
+            } else {
+                "Status: stopped"
+            });
             ui.horizontal(|ui| {
                 if ui.button("Start hub").clicked() {
                     let port = self.bridge_port.parse::<u16>().unwrap_or(8765);
                     let hub = crate::bridge::KeyboardBridgeHub::new(port);
                     match hub.start() {
                         Ok(()) => {
-                            self.status = format!("Android keyboard-bridge hub started on 127.0.0.1:{port}.");
+                            self.status =
+                                format!("Android keyboard-bridge hub started on 127.0.0.1:{port}.");
                             self.bridge = Some(hub);
                         }
                         Err(e) => {
@@ -76,8 +118,11 @@ Desktop keyboard-bridge endpoints are disabled/omitted.",
                 }
             });
         });
-        if !self.status.is_empty() {
-            ui.label(&self.status);
+        let status = self.status.clone();
+        if !status.is_empty() {
+            ui.add_space(8.0);
+            let is_error = status.starts_with("Failed");
+            theme::status(ui, &status, is_error);
         }
     }
 }
