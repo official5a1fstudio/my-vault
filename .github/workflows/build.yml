@@ -52,7 +52,15 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check (Linux)
-        run: cargo check --all-targets --target x86_64-unknown-linux-gnu 2>&1 | tee check-linux.log; exit ${PIPESTATUS[0]}
+        shell: bash
+        run: |
+          cargo check --all-targets --target x86_64-unknown-linux-gnu 2>&1 | tee check-linux.log
+          status=${PIPESTATUS[0]}
+          echo '### Linux check log' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat check-linux.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Upload Linux check log
         if: always()
@@ -110,7 +118,12 @@ jobs:
         run: |
           $ErrorActionPreference = 'Continue'
           cargo check --all-targets --target x86_64-pc-windows-msvc 2>&1 | Tee-Object -FilePath check-windows.log
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $status = $LASTEXITCODE
+          '### Windows check log' | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          '```text' | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          Get-Content check-windows.log | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          '```' | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          if ($status -ne 0) { exit $status }
 
       - name: Upload Windows check log
         if: always()
@@ -176,7 +189,14 @@ jobs:
 
       - name: Check (Debian)
         shell: bash
-        run: cargo check --all-targets --target x86_64-unknown-linux-gnu 2>&1 | tee check-debian.log; exit ${PIPESTATUS[0]}
+        run: |
+          cargo check --all-targets --target x86_64-unknown-linux-gnu 2>&1 | tee check-debian.log
+          status=${PIPESTATUS[0]}
+          echo '### Debian check log' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat check-debian.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Upload Debian check log
         if: always()
@@ -247,9 +267,18 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK platform and build-tools
+        shell: bash
         run: |
-          yes | sdkmanager --licenses > /dev/null
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+          {
+            yes | sdkmanager --licenses > /dev/null
+            sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+          } 2>&1 | tee android-sdk.log
+          status=${PIPESTATUS[0]}
+          echo '### Android SDK log' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat android-sdk.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Install Android NDK
         uses: nttld/setup-ndk@v1
@@ -259,16 +288,33 @@ jobs:
           add-to-path: false
 
       - name: Configure Android NDK and cargo-ndk
+        shell: bash
         run: |
-          echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
-          echo "NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
-          cargo install cargo-ndk --locked
+          {
+            echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+            echo "NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+            cargo install cargo-ndk --locked
+          } 2>&1 | tee android-ndk.log
+          status=${PIPESTATUS[0]}
+          echo '### Android NDK log' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat android-ndk.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Rust cache
         uses: Swatinem/rust-cache@v2
 
       - name: Check (Android)
-        run: cargo ndk -t arm64-v8a check --lib 2>&1 | tee check-android.log; exit ${PIPESTATUS[0]}
+        shell: bash
+        run: |
+          cargo ndk -t arm64-v8a check --lib 2>&1 | tee check-android.log
+          status=${PIPESTATUS[0]}
+          echo '### Android check log' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat check-android.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Upload Android check log
         if: always()
