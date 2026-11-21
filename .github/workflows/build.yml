@@ -269,9 +269,14 @@ jobs:
       - name: Install Android SDK platform and build-tools
         shell: bash
         run: |
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager -perm -u+x 2>/dev/null | sort -V | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager not found under $ANDROID_SDK_ROOT/cmdline-tools" >&2
+            exit 1
+          fi
           {
-            yes | sdkmanager --licenses > /dev/null
-            sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+            yes | "$SDKMANAGER" --licenses > /dev/null
+            "$SDKMANAGER" --install "platforms;android-34" "build-tools;34.0.0"
           } 2>&1 | tee android-sdk.log
           status=${PIPESTATUS[0]}
           echo '### Android SDK log' >> "$GITHUB_STEP_SUMMARY"
