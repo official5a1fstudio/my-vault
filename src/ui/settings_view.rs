@@ -16,7 +16,7 @@ impl SettingsViewState {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         theme::page_header(
             ui,
-            "VAULT  /  PREFERENCES",
+            "SOFTWARE  /  PREFERENCES",
             "Settings",
             "Quiet defaults, clear boundaries. Companion features are only enabled where the platform can support them.",
         );
@@ -30,52 +30,52 @@ impl SettingsViewState {
 
         #[cfg(not(target_os = "android"))]
         {
-            theme::card(ui, "01   /   KEYBOARD BRIDGE", |ui| {
+            theme::card(ui, "01", "KEYBOARD BRIDGE", |ui| {
                 ui.label(
                     egui::RichText::new("Keyboard bridge")
-                        .color(theme::INK)
-                        .size(15.0),
+                        .color(theme::VOID_INK)
+                        .size(16.0),
                 );
                 ui.add_space(8.0);
                 ui.label(
                     egui::RichText::new(
-                        "Companion keyboard-bridge hub is available only on Android mobile builds. \
+                        "Companion keyboard-bridge hub is available only on Android builds. \
                          Desktop keyboard-bridge endpoints are disabled/omitted.",
                     )
-                    .color(theme::INK_SOFT),
+                    .color(theme::VOID_MUTED),
                 );
             });
             ui.add_space(16.0);
         }
 
-        theme::card(ui, "02   /   AUTHENTICATOR CAPTURE", |ui| {
+        theme::card(ui, "02", "AUTHENTICATOR CAPTURE", |ui| {
             ui.label(
                 egui::RichText::new("Authenticator capture")
-                    .color(theme::INK)
-                    .size(15.0),
+                    .color(theme::VOID_INK)
+                    .size(16.0),
             );
             ui.add_space(8.0);
             ui.label(
                 egui::RichText::new("Camera/webcam QR scanning is removed on all platforms.")
-                    .color(theme::INK_SOFT),
+                    .color(theme::VOID_MUTED),
             );
             ui.label(
                 egui::RichText::new(
                     "Use image-file QR import (all platforms) or desktop window/region capture (Windows/Linux).",
                 )
-                .color(theme::INK_SOFT),
+                .color(theme::VOID_MUTED),
             );
         });
     }
 
     #[cfg(target_os = "android")]
     fn android_keyboard_bridge_ui(&mut self, ui: &mut egui::Ui) {
-        theme::card(ui, "01   /   KEYBOARD BRIDGE (ANDROID)", |ui| {
+        theme::card(ui, "01", "KEYBOARD BRIDGE (ANDROID)", |ui| {
             ui.label(
                 egui::RichText::new(
                     "Local companion keyboard-bridge hub for mobile keyboard paste integration.",
                 )
-                .color(theme::INK_SOFT),
+                .color(theme::VOID_MUTED),
             );
             ui.add_space(12.0);
             if self.bridge_port.is_empty() {
@@ -96,7 +96,7 @@ impl SettingsViewState {
                 "Status: stopped"
             });
             ui.horizontal(|ui| {
-                if ui.button("Start hub").clicked() {
+                if theme::secondary_button(ui, "Start hub") {
                     let port = self.bridge_port.parse::<u16>().unwrap_or(8765);
                     let hub = crate::bridge::KeyboardBridgeHub::new(port);
                     match hub.start() {
@@ -110,7 +110,8 @@ impl SettingsViewState {
                         }
                     }
                 }
-                if ui.button("Stop hub").clicked() {
+                ui.add_space(8.0);
+                if theme::secondary_button(ui, "Stop hub") {
                     if let Some(hub) = self.bridge.take() {
                         hub.stop();
                     }

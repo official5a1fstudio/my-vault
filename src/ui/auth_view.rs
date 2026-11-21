@@ -56,27 +56,35 @@ impl eframe::App for AppState {
             ui.add_space(12.0);
             ui.horizontal(|ui| {
                 theme::brand_header(ui);
-                ui.add_space(28.0);
-                let auth_label = if self.screen == crate::ui::Screen::Authenticator {
-                    egui::RichText::new("Authenticator")
-                        .color(theme::OLIVE)
-                        .size(13.0)
-                        .underline()
-                } else {
-                    egui::RichText::new("Authenticator")
-                        .color(theme::INK_SOFT)
-                        .size(13.0)
-                };
-                let settings_label = if self.screen == crate::ui::Screen::Settings {
-                    egui::RichText::new("Settings")
-                        .color(theme::OLIVE)
-                        .size(13.0)
-                        .underline()
-                } else {
-                    egui::RichText::new("Settings")
-                        .color(theme::INK_SOFT)
-                        .size(13.0)
-                };
+                ui.add_space(32.0);
+
+                let auth_active = self.screen == crate::ui::Screen::Authenticator;
+                let settings_active = self.screen == crate::ui::Screen::Settings;
+
+                let mut auth_label =
+                    egui::RichText::new("AUTHENTICATOR")
+                        .size(11.0)
+                        .color(if auth_active {
+                            theme::NEON
+                        } else {
+                            theme::VOID_MUTED
+                        });
+                if auth_active {
+                    auth_label = auth_label.underline();
+                }
+
+                let mut settings_label =
+                    egui::RichText::new("SETTINGS")
+                        .size(11.0)
+                        .color(if settings_active {
+                            theme::NEON
+                        } else {
+                            theme::VOID_MUTED
+                        });
+                if settings_active {
+                    settings_label = settings_label.underline();
+                }
+
                 if ui.button(auth_label).clicked() {
                     self.screen = crate::ui::Screen::Authenticator;
                 }
@@ -86,10 +94,19 @@ impl eframe::App for AppState {
                 }
             });
             ui.add_space(10.0);
+            let rect = ui.max_rect();
+            ui.painter().line_segment(
+                [
+                    egui::pos2(rect.left(), rect.bottom() - 1.0),
+                    egui::pos2(rect.right(), rect.bottom() - 1.0),
+                ],
+                egui::Stroke::new(1.0_f32, theme::VOID_LINE),
+            );
         });
 
         let screen = self.screen;
         egui::CentralPanel::default().show(ctx, |ui| {
+            theme::grid_background(ui);
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -120,20 +137,20 @@ impl AuthenticatorViewState {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         theme::page_header(
             ui,
-            "VAULT  /  TOTP",
+            "SOFTWARE  /  TOTP",
             "Add an authenticator",
-            "Quiet protection for everything that matters. Import a QR image or enter otpauth details manually — every code stays on this device.",
+            "Local codes. No cloud. Import a QR image or enter otpauth details manually — everything stays on this device.",
         );
         ui.add_space(26.0);
 
-        theme::card(ui, "01   /   QR IMAGE IMPORT", |ui| {
+        theme::card(ui, "01", "QR IMAGE IMPORT", |ui| {
             ui.label(
                 egui::RichText::new(
                     "Camera QR scanning is disabled. Import a QR image file instead.",
                 )
-                .color(theme::INK_SOFT),
+                .color(theme::VOID_MUTED),
             );
-            ui.add_space(12.0);
+            ui.add_space(14.0);
             if theme::primary_button(ui, "Import QR from image file") {
                 self.import_from_image_file();
             }
@@ -142,17 +159,18 @@ impl AuthenticatorViewState {
         #[cfg(any(target_os = "windows", target_os = "linux"))]
         {
             ui.add_space(16.0);
-            theme::card(ui, "02   /   DESKTOP CAPTURE", |ui| {
+            theme::card(ui, "02", "DESKTOP CAPTURE", |ui| {
                 ui.label(
                     egui::RichText::new("Scan a window or screen region — no camera required.")
-                        .color(theme::INK_SOFT),
+                        .color(theme::VOID_MUTED),
                 );
                 ui.add_space(12.0);
                 ui.horizontal(|ui| {
-                    if ui.button("Refresh monitors/windows").clicked() {
+                    if theme::secondary_button(ui, "Refresh monitors/windows") {
                         self.refresh_desktop_targets();
                     }
-                    if ui.button("Scan selected target").clicked() {
+                    ui.add_space(8.0);
+                    if theme::secondary_button(ui, "Scan selected target") {
                         self.scan_selected_desktop_target();
                     }
                 });
@@ -162,12 +180,12 @@ impl AuthenticatorViewState {
         }
 
         ui.add_space(16.0);
-        theme::card(ui, "03   /   MANUAL ENTRY", |ui| {
+        theme::card(ui, "03", "MANUAL ENTRY", |ui| {
             ui.label(
                 egui::RichText::new(
                     "Issuer, account and Base32 secret — or a full otpauth:// URI.",
                 )
-                .color(theme::INK_SOFT),
+                .color(theme::VOID_MUTED),
             );
             ui.add_space(12.0);
             ui.horizontal(|ui| {
@@ -192,7 +210,7 @@ impl AuthenticatorViewState {
         let added = self.last_added.clone();
         if !status.is_empty() || added.is_some() {
             ui.add_space(16.0);
-            theme::card(ui, "04   /   RESULT", |ui| {
+            theme::card(ui, "04", "RESULT", |ui| {
                 if !status.is_empty() {
                     let is_error = status.starts_with("Failed")
                         || status.starts_with("Invalid")
@@ -207,21 +225,21 @@ impl AuthenticatorViewState {
                             "Added: {} ({})",
                             otp.issuer, otp.account_name
                         ))
-                        .color(theme::INK),
+                        .color(theme::VOID_INK),
                     );
                     if let Some(code) = &self.preview_code {
                         ui.add_space(8.0);
                         ui.label(
                             egui::RichText::new(format!("Current code: {}", format_code(code)))
-                                .color(theme::OLIVE)
-                                .size(22.0),
+                                .color(theme::NEON)
+                                .size(26.0),
                         );
                         ui.label(
                             egui::RichText::new(format!(
                                 "Refreshes in: {}s",
                                 self.preview_remaining
                             ))
-                            .color(theme::INK_SOFT),
+                            .color(theme::VOID_MUTED),
                         );
                         ui.add_space(10.0);
                         if theme::primary_button(ui, "Copy code") {
