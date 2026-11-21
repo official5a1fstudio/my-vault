@@ -292,7 +292,7 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release_assets
-          find release_artifacts -type f \( -name '*.exe' -o -name '*.sha256' -o -name '*linux-x86_64' -o -name '*.tar.gz' -o -name '*.apk' -o -name '*.so' \) -exec cp {} release_assets/ \;
+          find release_artifacts -type f \( -name '*.exe' -o -name '*.sha256' -o -name '*linux-x86_64' -o -name '*debian-x86_64' -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.apk' -o -name '*.so' \) -exec cp {} release_assets/ \;
           ls -la release_assets
 
       - name: Resolve release tag
