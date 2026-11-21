@@ -74,35 +74,35 @@ pub fn apply(ctx: &egui::Context) {
     visuals.window_fill = PAPER;
     visuals.extreme_bg_color = PAPER_RAISED;
     visuals.faint_bg_color = OLIVE_SOFT;
-    visuals.text_color = INK;
+    visuals.override_text_color = Some(INK);
     visuals.hyperlink_color = OLIVE;
     visuals.error_fg_color = CORAL_DEEP;
     visuals.selection.bg_fill = OLIVE_SOFT;
-    visuals.selection.stroke = egui::Stroke::new(1.0, OLIVE);
+    visuals.selection.stroke = egui::Stroke::new(1.0_f32, OLIVE);
 
     let widgets = &mut visuals.widgets;
     widgets.noninteractive.bg_fill = PAPER;
     widgets.noninteractive.weak_bg_fill = PAPER;
-    widgets.noninteractive.fg_color = INK_SOFT;
-    widgets.noninteractive.stroke = egui::Stroke::new(1.0, hairline());
+    widgets.noninteractive.fg_stroke.color = INK_SOFT;
+    widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0_f32, hairline());
     widgets.noninteractive.corner_radius = egui::CornerRadius::same(0);
 
     widgets.inactive.bg_fill = PAPER_RAISED;
     widgets.inactive.weak_bg_fill = PAPER_RAISED;
-    widgets.inactive.fg_color = INK;
-    widgets.inactive.stroke = egui::Stroke::new(1.0, hairline());
+    widgets.inactive.fg_stroke.color = INK;
+    widgets.inactive.bg_stroke = egui::Stroke::new(1.0_f32, hairline());
     widgets.inactive.corner_radius = egui::CornerRadius::same(2);
 
     widgets.hovered.bg_fill = OLIVE_SOFT;
     widgets.hovered.weak_bg_fill = OLIVE_SOFT;
-    widgets.hovered.fg_color = INK;
-    widgets.hovered.stroke = egui::Stroke::new(1.0, OLIVE);
+    widgets.hovered.fg_stroke.color = INK;
+    widgets.hovered.bg_stroke = egui::Stroke::new(1.0_f32, OLIVE);
     widgets.hovered.corner_radius = egui::CornerRadius::same(2);
 
     widgets.active.bg_fill = OLIVE;
     widgets.active.weak_bg_fill = OLIVE_SOFT;
-    widgets.active.fg_color = PAPER_RAISED;
-    widgets.active.stroke = egui::Stroke::new(1.0, OLIVE_DEEP);
+    widgets.active.fg_stroke.color = PAPER_RAISED;
+    widgets.active.bg_stroke = egui::Stroke::new(1.0_f32, OLIVE_DEEP);
     widgets.active.corner_radius = egui::CornerRadius::same(2);
 
     ctx.set_style(style);
@@ -131,7 +131,7 @@ pub fn page_header(ui: &mut egui::Ui, label: &str, heading: &str, lead: &str) {
 pub fn card(ui: &mut egui::Ui, title: &str, body_fn: impl FnOnce(&mut egui::Ui)) {
     egui::Frame::new()
         .fill(PAPER_RAISED)
-        .stroke(egui::Stroke::new(1.0, hairline()))
+        .stroke(egui::Stroke::new(1.0_f32, hairline()))
         .corner_radius(egui::CornerRadius::same(2))
         .inner_margin(20.0)
         .show(ui, |ui| {
@@ -156,7 +156,7 @@ pub fn brand_header(ui: &mut egui::Ui) {
 
 fn draw_mark(painter: &egui::Painter, rect: egui::Rect) {
     let r = rect.shrink(2.0);
-    let stroke = egui::Stroke::new(1.5, OLIVE);
+    let stroke = egui::Stroke::new(1.5_f32, OLIVE);
     painter.line_segment([r.left_top(), r.right_top()], stroke);
     painter.line_segment([r.left_top(), r.left_bottom()], stroke);
     painter.line_segment([r.right_top(), r.right_bottom()], stroke);
