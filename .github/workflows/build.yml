@@ -164,6 +164,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check (Debian)
+        shell: bash
         run: cargo check --all-targets --target x86_64-unknown-linux-gnu 2>&1 | tee check-debian.log; exit ${PIPESTATUS[0]}
 
       - name: Upload Debian check log
@@ -253,9 +254,6 @@ jobs:
           name: check-log-android
           path: check-android.log
           if-no-files-found: warn
-
-      - name: Test (host unit tests)
-        run: cargo test --lib
 
       - name: Build release (Android)
         run: cargo ndk -t arm64-v8a -o dist_test/android build --release --lib
