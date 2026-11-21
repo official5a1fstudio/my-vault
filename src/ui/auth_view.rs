@@ -111,16 +111,16 @@ impl AuthenticatorViewState {
             ui.label(&self.status);
         }
 
-        if let Some(otp) = &self.last_added {
+        if let Some(otp) = self.last_added.clone() {
             ui.add_space(8.0);
+            self.refresh_preview(&otp);
             ui.group(|ui| {
                 ui.label(format!("Added: {} ({})", otp.issuer, otp.account_name));
-                self.refresh_preview(otp);
                 if let Some(code) = &self.preview_code {
                     ui.label(format!("Current code: {}", format_code(code)));
                     ui.label(format!("Refreshes in: {}s", self.preview_remaining));
                     if ui.button("Copy code").clicked() {
-                        ui.output_mut(|o| o.copied_text = code.clone());
+                        ui.ctx().copy_text(code.clone());
                         self.status = "Code copied to clipboard.".into();
                     }
                 }

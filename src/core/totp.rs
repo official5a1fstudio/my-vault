@@ -1,5 +1,5 @@
 ﻿use data_encoding::BASE32_NOPAD;
-use hmac::{Hmac, Mac};
+use hmac::{digest::KeyInit, Hmac, Mac};
 use image::DynamicImage;
 use sha1::Sha1;
 use sha2::{Sha256, Sha512};
@@ -231,7 +231,7 @@ pub fn generate_totp(otp: &OtpAuth, unix_seconds: u64) -> Result<String, TotpErr
     Ok(format!("{:0width$}", code_int % modulus, width = otp.digits as usize))
 }
 
-fn hmac_bytes<M: Mac>(key: &[u8], msg: &[u8]) -> Vec<u8> {
+fn hmac_bytes<M: Mac + KeyInit>(key: &[u8], msg: &[u8]) -> Vec<u8> {
     let mut mac = <M as Mac>::new_from_slice(key).expect("HMAC accepts any key length");
     mac.update(msg);
     mac.finalize().into_bytes().to_vec()

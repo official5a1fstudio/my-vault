@@ -102,6 +102,7 @@ jobs:
       - name: Check (Windows)
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Continue'
           cargo check --all-targets --target x86_64-pc-windows-msvc 2>&1 | Tee-Object -FilePath check-windows.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -243,7 +244,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check (Android)
-        run: cargo ndk -t arm64-v8a check --target aarch64-linux-android --lib 2>&1 | tee check-android.log; exit ${PIPESTATUS[0]}
+        run: cargo ndk -t arm64-v8a check --lib 2>&1 | tee check-android.log; exit ${PIPESTATUS[0]}
 
       - name: Upload Android check log
         if: always()
@@ -257,7 +258,7 @@ jobs:
         run: cargo test --lib
 
       - name: Build release (Android)
-        run: cargo ndk -t arm64-v8a -o dist_test/android build --release --target aarch64-linux-android --lib
+        run: cargo ndk -t arm64-v8a -o dist_test/android build --release --lib
 
       - name: Collect Android artifacts
         run: |
