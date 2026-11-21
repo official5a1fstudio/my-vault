@@ -148,7 +148,7 @@ pub fn page_header(ui: &mut egui::Ui, label: &str, heading: &str, lead: &str) {
     ui.add_space(18.0);
 
     let min = ui.min_rect();
-    let y = ui.cursor().y;
+    let y = ui.cursor().min.y;
     ui.painter().line_segment(
         [egui::pos2(min.left(), y), egui::pos2(min.right(), y)],
         egui::Stroke::new(1.0_f32, VOID_LINE),
@@ -190,6 +190,7 @@ fn draw_card_art(painter: &egui::Painter, rect: egui::Rect, index: &str) {
         rect,
         egui::CornerRadius::same(0),
         egui::Stroke::new(1.0_f32, VOID_LINE),
+        egui::StrokeKind::Inside,
     );
 
     let grid_stroke = egui::Stroke::new(
@@ -297,8 +298,12 @@ fn button(ui: &mut egui::Ui, text: &str, primary: bool) -> bool {
 
     ui.painter()
         .rect_filled(rect, egui::CornerRadius::same(0), fill);
-    ui.painter()
-        .rect_stroke(rect, egui::CornerRadius::same(0), stroke);
+    ui.painter().rect_stroke(
+        rect,
+        egui::CornerRadius::same(0),
+        stroke,
+        egui::StrokeKind::Inside,
+    );
     ui.painter().text(
         rect.center(),
         egui::Align2::CENTER_CENTER,
@@ -338,9 +343,10 @@ fn install_system_font(ctx: &egui::Context) {
     for path in candidates {
         if let Ok(bytes) = std::fs::read(path) {
             let mut fonts = egui::FontDefinitions::default();
-            fonts
-                .font_data
-                .insert("mawthooq-ui".to_owned(), egui::FontData::from_owned(bytes));
+            fonts.font_data.insert(
+                "mawthooq-ui".to_owned(),
+                std::sync::Arc::new(egui::FontData::from_owned(bytes)),
+            );
             fonts
                 .families
                 .entry(egui::FontFamily::Proportional)
